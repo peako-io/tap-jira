@@ -12,7 +12,7 @@ setup(name="tap-jira",
           "singer-python==5.12.1",
           "requests==2.20.0",
           "dateparser",
-          "boto3",
+          "boto3==1.26.27",
       ],
       extras_require={
           'dev': [
