@@ -8,6 +8,7 @@ from singer.catalog import Catalog, CatalogEntry, Schema
 from . import streams as streams_
 from .context import Context
 from .http import Client
+import boto3
 
 LOGGER = singer.get_logger()
 REQUIRED_CONFIG_KEYS_CLOUD = ["start_date",
@@ -22,6 +23,9 @@ REQUIRED_CONFIG_KEYS_HOSTED = ["start_date",
                                "password",
                                "base_url",
                                "user_agent"]
+
+ACCESS_TOKEN_PATH = '/peako_data/prod/cobee/jira/tap_jira_access_token'
+REFRESH_TOKEN_PATH = '/peako_data/prod/cobee/jira/tap_jira_refresh_token'
 
 
 def get_args():
@@ -110,8 +114,29 @@ def sync():
     singer.write_state(Context.state)
 
 
+def get_jira_refresh_token(ssm_client):
+    client_secret_parameter = ssm_client.get_parameter(
+        Name=REFRESH_TOKEN_PATH,
+        WithDecryption=True
+    )
+    return client_secret_parameter['Parameter']['Value']
+
+
+def get_jira_access_token(ssm_client):
+    client_secret_parameter = ssm_client.get_parameter(
+        Name=ACCESS_TOKEN_PATH,
+        WithDecryption=True
+    )
+    return client_secret_parameter['Parameter']['Value']
+
+
 @singer.utils.handle_top_exception(LOGGER)
 def main():
+    if os.getenv('ENVIRONMENT') == "PRO":
+        ssm_client = boto3.client('ssm')
+        os.environ['TAP_JIRA_REFRESH_TOKEN'] = get_jira_refresh_token(ssm_client)
+        os.environ['TAP_JIRA_ACCESS_TOKEN'] = get_jira_access_token(ssm_client)
+
     args = get_args()
 
     jira_config = args.config

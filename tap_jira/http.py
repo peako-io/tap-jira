@@ -181,7 +181,6 @@ class Client():
             # Only appears to be needed once for any 6 hour period. If
             # running the tap for more than 6 hours is needed this will
             # likely need to be more complicated.
-            self.refresh_credentials()
             self.test_credentials_are_authorized()
         else:
             LOGGER.info("Using Basic Auth API authentication")
